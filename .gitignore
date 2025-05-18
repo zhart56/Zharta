@@ -7,8 +7,8 @@ import (
 const HMAX int = 7
 
 type riwayatTidur struct {
-	hari, tanggal,jamTidur,jamBangun     string
-	durasi, kualitastidur int
+	hari, tanggal                                                                          string
+	hjamTidur, mjamTidur, hjamBangun, mjamBangun, hdurasi, mdurasi, ddurasi, kualitastidur int
 }
 type arrTidur [HMAX]riwayatTidur
 
@@ -83,33 +83,30 @@ func tambahRiwayat(dataTidur *arrTidur, nData *int) {
 	fmt.Print("Masukkan tanggal: ")
 	fmt.Scanln(&dataTidur[*nData].tanggal)
 	fmt.Print("Masukkan jam tidur: ")
-	fmt.Scanln(&dataTidur[*nData].jamTidur)
+	fmt.Scanln(&dataTidur[*nData].hjamTidur)
+	fmt.Scanln(&dataTidur[*nData].mjamTidur)
 	fmt.Print("Masukkan jam bangun: ")
-	fmt.Scanln(&dataTidur[*nData].jamBangun)
+	fmt.Scanln(&dataTidur[*nData].hjamBangun)
+	fmt.Scanln(&dataTidur[*nData].mjamBangun)
 	fmt.Print("Masukkan kualitas tidur (1-5): ")
 	fmt.Scanln(&dataTidur[*nData].kualitastidur)
 
-	dataTidur[*nData].durasi = totDurasi(dataTidur[*nData].jamTidur, dataTidur[*nData].jamBangun)
+	dataTidur[*nData].ddurasi = totDurasi(dataTidur[*nData].hjamTidur, dataTidur[*nData].mjamTidur, dataTidur[*nData].hjamBangun, dataTidur[*nData].mjamBangun)
+	dataTidur[*nData].hdurasi = totDurasi(dataTidur[*nData].hjamTidur, dataTidur[*nData].mjamTidur, dataTidur[*nData].hjamBangun, dataTidur[*nData].mjamBangun) / 60
+	dataTidur[*nData].mdurasi = totDurasi(dataTidur[*nData].hjamTidur, dataTidur[*nData].mjamTidur, dataTidur[*nData].hjamBangun, dataTidur[*nData].mjamBangun) % 60
 	*nData++
 	fmt.Println("Data berhasil ditambahkan.")
 }
-func persejam(jam string) (int, int) {
-	var h, m int
-	_, simpan := fmt.Sscanf(jam, "%d:%d", &h, &m)
-	if simpan != nil || h < 0 || h > 23 || m < 0 || m > 59 {
-		return 0, 0
+
+func totDurasi(htidur, mtidur, hbangun, mbangun int) int {
+
+	if htidur < 0 || htidur > 23 || mtidur < 0 || mtidur > 59 || hbangun < 0 || hbangun > 23 || mbangun < 0 || mbangun > 59 {
+		fmt.Println("Jam tidak valid.")
+		return 0
 	}
-	return h, m
-
-}
-
-func totDurasi(tidur, bangun string) int {
-
-	htidur, mtidur := persejam(tidur)
-	hbangun, mbangun := persejam(bangun)
 	totaltidur := htidur*60 + mtidur
 	totalbangun := hbangun*60 + mbangun
-	if totalbangun < totaltidur {
+	if totalbangun <= totaltidur {
 		return (1440 - totaltidur) + totalbangun
 	}
 	return totalbangun - totaltidur
@@ -124,10 +121,9 @@ func allData(T arrTidur, nData int) {
 	}
 	fmt.Println("== Riwayat Tidur ==")
 	for i = 0; i < nData; i++ {
-		var durasi int
-		durasi = totDurasi(T[i].jamTidur, T[i].jamBangun)
-		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %s, Bangun: %s, Durasi: %d jam %d Menit, Kualitas: %d\n", T[i].hari,
-			T[i].tanggal, T[i].jamTidur, T[i].jamBangun, durasi/60, durasi%60, T[i].kualitastidur)
+
+		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %d:%d, Bangun: %d:%d, Durasi: %d jam %d Menit, Kualitas: %d\n", T[i].hari,
+			T[i].tanggal, T[i].hjamTidur, T[i].mjamTidur, T[i].hjamBangun, T[i].mjamBangun, T[i].hdurasi, T[i].mdurasi, T[i].kualitastidur)
 	}
 	fmt.Println()
 }
@@ -138,7 +134,7 @@ func selectionSort(T *arrTidur, nData int, urutkan int) {
 	for pass = 0; pass < nData-1; pass++ {
 		idx = pass
 		for i = pass + 1; i < nData-1; i++ {
-			if urutkan == 1 && (*T)[idx].durasi > (*T)[i].durasi {
+			if urutkan == 1 && (*T)[idx].ddurasi > (*T)[i].ddurasi {
 				idx = i
 			} else if urutkan == 2 && (*T)[idx].tanggal > (*T)[i].tanggal {
 				idx = i
@@ -158,8 +154,8 @@ func insertionSort(T *arrTidur, nData int, urutkan int) {
 		i = pass
 		temp = (*T)[pass]
 		for i > 0 {
-			if urutkan == 1 && temp.durasi < (*T)[i-1].durasi {
-				for i > 0 && temp.durasi < (*T)[i-1].durasi {
+			if urutkan == 1 && temp.ddurasi < (*T)[i-1].ddurasi {
+				for i > 0 && temp.ddurasi < (*T)[i-1].ddurasi {
 					(*T)[i] = (*T)[i-1]
 					i--
 				}
@@ -196,10 +192,8 @@ func sequentialSearch(T arrTidur, nData int) {
 
 	if found != -1 {
 		fmt.Println("Data ditemukan:")
-		var durasi int
-		durasi = totDurasi(T[found].jamTidur, T[found].jamBangun)
-		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %s, Bangun: %s, Durasi: %d jam %d menit, Kualitas: %d\n", T[found].hari,
-			T[found].tanggal, T[found].jamTidur, T[found].jamBangun, durasi/60, durasi%60, T[found].kualitastidur)
+		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %d:%d, Bangun: %d:%d, Durasi: %d jam %d menit, Kualitas: %d\n", T[found].hari,
+			T[found].tanggal, T[found].hjamTidur, T[found].mjamTidur, T[found].hjamBangun, T[found].mjamBangun, T[found].hdurasi, T[found].mdurasi, T[found].kualitastidur)
 	} else {
 		fmt.Println("Data tidak ditemukan.")
 	}
@@ -214,7 +208,7 @@ func binarySearch(T arrTidur, nData int) {
 	}
 	insertionSort(&T, nData, 2) // urutkan berdasarkan tanggal sebelum pencarian biner
 
-	fmt.Print("Dicari: ")
+	fmt.Print("Dicari tanggal: ")
 	fmt.Scanln(&findH)
 	found = -1
 	left = 0
@@ -222,9 +216,9 @@ func binarySearch(T arrTidur, nData int) {
 
 	for left <= right && found == -1 {
 		mid = (left + right) / 2
-		if findH == T[mid].hari {
+		if findH == T[mid].tanggal {
 			found = mid
-		} else if findH > T[mid].hari {
+		} else if findH > T[mid].tanggal {
 			left = mid + 1
 		} else {
 			right = mid - 1
@@ -235,16 +229,15 @@ func binarySearch(T arrTidur, nData int) {
 		fmt.Println("Data tidak ditemukan")
 	} else {
 		fmt.Println("Data ditemukan:")
-		var durasi int
-		durasi = totDurasi(T[found].jamTidur, T[found].jamBangun)
-		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %s, Bangun: %s, Durasi: %d jam %d menit, Kualitas: %d\n", T[found].hari,
-			T[found].tanggal, T[found].jamTidur, T[found].jamBangun, durasi/60,durasi%60, T[found].kualitastidur)
+
+		fmt.Printf("Hari: %s, Tanggal: %s, Tidur: %d:%d, Bangun: %d:%d, Durasi: %d jam %d menit, Kualitas: %d\n", T[found].hari,
+			T[found].tanggal, T[found].hjamTidur, T[found].mjamTidur, T[found].hjamBangun, T[found].mjamBangun, T[found].hdurasi, T[found].mdurasi, T[found].kualitastidur)
 	}
 }
 func rekapdandata(t arrTidur, ndata int) {
 	var temp arrTidur
-	var start, total, i int
-	var ratarata float64
+	var start, i int
+	var ratarata, total float64
 
 	if ndata == 0 {
 		fmt.Println("Belum ada data.")
@@ -261,12 +254,11 @@ func rekapdandata(t arrTidur, ndata int) {
 	total = 0
 	fmt.Println("== Rekap 7 hari terakhir==")
 	for i = start; i < nData; i++ {
-		var durasi int
-		durasi = totDurasi(temp[i].jamTidur, temp[i].jamBangun)
+
 		fmt.Printf("Hari: %s, Tanggal: %s, Durasi: %d jam %d menit\n", temp[i].hari,
-			temp[i].tanggal, durasi/60, durasi%60)
-	
-		total += durasi/60
+			temp[i].tanggal, temp[i].hdurasi, temp[i].mdurasi)
+
+		total += float64(temp[i].hdurasi)
 	}
 	ratarata = float64(total) / float64(nData-start)
 	fmt.Printf("Rata-rata durasi tidur: %.2f jam\n", ratarata)
@@ -295,12 +287,16 @@ func editRiwayat(T *arrTidur, nData int) {
 	fmt.Printf("Edit data tanggal %s:\n", T[idx].tanggal)
 	fmt.Scanln(&T[idx].tanggal)
 	fmt.Print("Jam tidur (0-24): ")
-	fmt.Scanln(&T[idx].jamTidur)
-	fmt.Print("Jam bangun (0-24): ")
-	fmt.Scanln(&T[idx].jamBangun)
-	fmt.Print("Kualitas tidur (1-5): ")
-	fmt.Scanln(&T[idx].kualitastidur)
-	T[idx].durasi = totDurasi(T[idx].jamTidur, T[idx].jamBangun)
+	fmt.Print("Masukkan jam tidur: ")
+	fmt.Scanln(&T[idx].hjamTidur)
+	fmt.Scanln(&T[idx].mjamTidur)
+	fmt.Print("Masukkan jam bangun: ")
+	fmt.Scanln(&T[idx].hjamBangun)
+	fmt.Scanln(&T[idx].mjamBangun)
+
+	T[idx].ddurasi = totDurasi(T[idx].hjamTidur, T[idx].mjamTidur, T[idx].hjamBangun, T[idx].mjamBangun)
+	T[idx].hdurasi = totDurasi(T[idx].hjamTidur, T[idx].mjamTidur, T[idx].hjamBangun, T[idx].mjamBangun) / 60
+	T[idx].mdurasi = totDurasi(T[idx].hjamTidur, T[idx].mjamTidur, T[idx].hjamBangun, T[idx].mjamBangun) % 60
 	fmt.Println("Data berhasil diubah.")
 }
 
